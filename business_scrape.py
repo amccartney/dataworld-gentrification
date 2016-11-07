@@ -1,6 +1,8 @@
 # This takes each business from the original list of businesses created by the
 # yelp_scrape.py script and pulls its business profile from the Yelp API.
 
+# @geraldarthur contributed major help to this script
+
 import csv
 import json
 import sys
