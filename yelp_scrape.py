@@ -1,6 +1,7 @@
 from yelp.client import Client
 from yelp.oauth1_authenticator import Oauth1Authenticator
 import csv
+from passwords import *
 
 
 auth = Oauth1Authenticator(

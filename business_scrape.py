@@ -1,6 +1,10 @@
+# This takes each business from the original list of businesses created by the
+# yelp_scrape.py script and pulls its business profile from the Yelp API.
+
 import csv
 import json
 import sys
+from passwords import *
 from yelp.client import Client
 from yelp.oauth1_authenticator import Oauth1Authenticator
 
@@ -105,4 +109,3 @@ if __name__ == "__main__":
     csv_name = 'data/all.csv'
     business_scraper = YelpBusinessScraper(auth)
     business_scraper.read_csv(csv_name)
-    # data = earch_scraper.parse_response(response)
