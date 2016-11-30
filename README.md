@@ -13,3 +13,4 @@ Then the order the scripts should be run in:
 2. business_scrape.py
 3. Make this API call: http://api.census.gov/data/2014/acs5?get=B19013_001E&for=zip+code+tabulation+area
 4. census_cleaner.py
+5. table_maker.py
