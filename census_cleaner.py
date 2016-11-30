@@ -1,22 +1,27 @@
 # This script takes data from the US Census 5-year American Community Survey,
-# which, in this case, have been saved into two files, "2011.json" and "2014.json",
-# and cross-references them against a list of zip codes that relate to the cities we are analyzing.
+# which, in this case, have been saved into two files, "2000.csv" and "2014.json",
+# and cross-references them against a list of zip codes tabulation areas that
+# relate to the cities we are analyzing.
 
-# The API calls that produced the data found in both of those JSON files are:
-# - http://api.census.gov/data/2011/acs5?get=NAME,B01001_001E,B02001_002E,B19013_001E,B25064_001E,B25071_001E,B25077_001E&for=zip+code+tabulation+area:*
-# - http://api.census.gov/data/2014/acs5?get=NAME,B01001_001E,B02001_002E,B19013_001E,B25064_001E,B25071_001E,B25077_001E&for=zip+code+tabulation+area:*
+# ZCTA's I had to throw out because they weren't represented in both data sets:
+# - 97239
+# - 97208
+# - 97086
+# - 94613
+# - 94158
+# - 78712
 
-# The meanings of the census codes in the API call are:
-# - 'B19013_001E' = 'Median household income'
-
+# The 2000 Census data coudl be found at:
 # http://factfinder.census.gov/faces/nav/jsf/pages/download_center.xhtml
+
+# The API call that produced the data in the 2014 JSON file is:
+# - http://api.census.gov/data/2014/acs5?get=B19013_001E&for=zip+code+tabulation+area
+
+# The meanings of the census code in the API call is:
+# - 'B19013_001E' = 'Median household income'
 
 # This comes from the ACS variable dictionary:
 # http://api.census.gov/data/2013/acs5/variables.html
-
-# 2011 is the earliest year where the API can tabulate results based on a
-# ZIP code area, and 2014 is the last year of data, which is why they are used here.
-
 
 import json
 import csv
@@ -62,7 +67,8 @@ class CensusCleaner(object):
 
 
     def find_relevant_zips_csv(self, all_zips, data_csv):
-        relevant_zips = []
+        # Does the same thing as the above function, but processes the 2000.csv
+        # instead of a JSON
 
         writer = csv.writer(open('data/census/2000_cleaned.csv','wb'))
         header = ['Year','ZCTA5','Median household income']
@@ -82,6 +88,7 @@ class CensusCleaner(object):
 if __name__ == "__main__":
 
     # ZIP codes associated with San Francisco, Brooklyn, Portland, Austin and Oakland
+    # Change this based on which ZIPs you want to retain from the original Census data
     all_zips = ['94102','94103','94104','94105','94107','94108','94109','94110','94111',
                 '94112','94114','94115','94116','94117','94118','94121','94122','94123',
                 '94124','94127','94129','94130','94131','94132','94133','94134','94158',
@@ -109,12 +116,3 @@ if __name__ == "__main__":
 
     json_data = cleaner.open_json("data/census/2014.json")
     cleaner.find_relevant_zips(all_zips, json_data)
-
-
-    # ZIPS we have to throw output
-    # 97239
-    # 97208
-    # 97086
-    # 94613
-    # 94158
-    # 78712

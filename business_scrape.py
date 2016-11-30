@@ -21,33 +21,53 @@ class YelpBusinessScraper(object):
         )
         self.client = Client(self.auth)
         self.reader = csv.DictReader
+        self.outfile = open('data/yelp/businesses.csv', "w+")
         self.db = []
 
-    def read_csv(self, csv_name):
-        with open(csv_name) as csvfile:
+    def read_csv(self, csv_filename):
+        with open(csv_filename) as csvfile:
+            self.init_write_csv("data/yelp/businesses.csv")
             csv_file = self.reader(csvfile)
             for row in csv_file:
-                self.get_yelp_business(row)
-            self.write_json("data/businesses.json")
-
-    def write_json(self, json_name):
-        with open(json_name, "w+") as outfile:
+                try:
+                    self.get_yelp_business(row)
+                except:
+                    print "Failed to get records for " + row['business_id']
+            self.outfile.close()
             print "Done!"
-            print "Wrote to %s businesses to %s" % (len(self.db), outfile)
-            json.dumps(self.db, outfile)
+            # print "Wrote to %s businesses to %s" % (len(self.db), outfile)
+
+    def init_write_csv(self, csv_filename):
+        fieldnames = [
+            'name',
+            'is_closed',
+            'business_id',
+            'address',
+            'city',
+            'zip_code',
+            'longitude',
+            'latitude',
+            'neighborhood_1',
+            'neighborhood_2',
+            'category_1',
+            'category_2'
+        ]
+        self.writer = csv.DictWriter(self.outfile, fieldnames=fieldnames)
+        self.writer.writeheader()
+
 
     def get_yelp_business(self, row):
         business_id = row['business_id']
         response = self.client.get_business(business_id)
-        print response.business.name
+        # print response.business.name
         self.get_response_info(response)
 
     def get_response_info(self, response):
         response.business.neighborhoods = self.get_neighborhoods(response)
         response.business.categories = self.get_categories(response)
         response.business.address = self.get_address(response)
-        business_json = self.get_business_json(response)
-        self.db.append(business_json)
+        business_dict = self.get_business_dict(response)
+        self.writer.writerow(business_dict)
 
     def get_neighborhoods(self, response):
         output = ["", ""]
@@ -71,43 +91,52 @@ class YelpBusinessScraper(object):
         output = ""
         addresses = response.business.location.address
         if addresses is not None:
-            output = addresses[0]
+            try:
+                output = addresses[0]
+            except:
+                output = addresses
         return output
 
-    def get_business_json(self, response):
+    def get_business_dict(self, response):
         business = response.business
+
+        try:
+            if business.location.coordinate.latitude:
+                latitude = business.location.coordinate.latitude
+        except:
+            latitude = None
+
+        try:
+            if business.location.coordinate.longitude:
+                longitude = business.location.coordinate.longitude
+        except:
+            longitude = None
+
         output = {
-            'name':         business.name,
-            'is_closed':    business.is_closed,
-            'business_id':  business.id.encode("utf-8"),
-            'address':      business.address,
-            'city':         business.location.city,
-            'zip_code':     business.location.postal_code,
-            'coordinates':  {
-                'longitude':    business.location.coordinate.longitude,
-                'latitude':     business.location.coordinate.latitude
-            },
-            'neighborhoods': {
-                'neighborhood_1': business.neighborhoods[0],
-                'neighborhood_2': business.neighborhoods[1],
-            },
-            'categories': {
-                'category_1': business.categories[0],
-                'category_2': business.categories[1]
-            },
+            'name':           business.name,
+            'is_closed':      business.is_closed,
+            'business_id':    business.id.encode("utf-8"),
+            'address':        business.address,
+            'city':           business.location.city,
+            'zip_code':       business.location.postal_code,
+            'longitude':      longitude,
+            'latitude':       latitude,
+            'neighborhood_1': business.neighborhoods[0],
+            'neighborhood_2': business.neighborhoods[1],
+            'category_1':     business.categories[0],
+            'category_2':     business.categories[1]
         }
         return output
 
 
 if __name__ == "__main__":
 
-    auth = Oauth1Authenticator(
-        consumer_key=YELP_CONSUMER_KEY,
-        consumer_secret=YELP_CONSUMER_SECRET,
-        token=YELP_TOKEN,
-        token_secret=YELP_TOKEN_SECRET
-    )
-
-    csv_name = 'data/all.csv'
+    auth = {
+        'consumer_key': YELP_CONSUMER_KEY,
+        'consumer_secret': YELP_CONSUMER_SECRET,
+        'token': YELP_TOKEN,
+        'token_secret': YELP_TOKEN_SECRET
+    }
+    csv_name = 'data/yelp/all.csv'
     business_scraper = YelpBusinessScraper(auth)
     business_scraper.read_csv(csv_name)
